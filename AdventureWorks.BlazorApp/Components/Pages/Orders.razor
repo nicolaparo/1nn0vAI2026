@@ -1,0 +1,36 @@
+@page "/orders"
+@rendermode InteractiveServer
+@inject OrderService OrderService
+
+<PageTitle>Orders</PageTitle>
+
+<h1 class="h3 mb-4"><i class="fa-solid fa-file-invoice-dollar me-2 text-primary"></i>Orders</h1>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">All orders</span>
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small text-secondary" for="take">Show</label>
+            <select id="take" class="form-select form-select-sm w-auto" @bind="take" @bind:after="LoadOrdersAsync">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+            </select>
+        </div>
+    </div>
+    <OrderTable Orders="orders" />
+</div>
+
+@code {
+    private IReadOnlyList<OrderSummary>? orders;
+    private int take = 50;
+
+    protected override Task OnInitializedAsync() => LoadOrdersAsync();
+
+    private async Task LoadOrdersAsync()
+    {
+        orders = null;
+        orders = await OrderService.GetOrdersAsync(take);
+    }
+}

@@ -1,0 +1,29 @@
+@inherits LayoutComponentBase
+
+<div class="d-flex min-vh-100">
+    <NavMenu />
+
+    <div class="flex-grow-1 bg-body-tertiary">
+        <header class="d-flex justify-content-between align-items-center bg-white border-bottom px-4 py-2 sticky-top">
+            <span class="fw-semibold text-secondary">
+                <i class="fa-solid fa-building me-2"></i>AdventureWorks Cycles
+            </span>
+            <div class="d-flex align-items-center gap-3">
+                <a class="btn btn-light btn-sm" href="https://learn.microsoft.com/aspnet/core/" target="_blank">
+                    <i class="fa-solid fa-circle-question me-1"></i>About
+                </a>
+                <span class="text-secondary small"><i class="fa-solid fa-user me-1"></i>Administrator</span>
+            </div>
+        </header>
+
+        <main class="p-4">
+            @Body
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
