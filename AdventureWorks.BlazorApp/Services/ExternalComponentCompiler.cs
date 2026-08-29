@@ -18,9 +18,12 @@ public sealed class ExternalComponentCompiler(IWebHostEnvironment environment)
     private const string ExternalPagesDirectory = "AdventureWorks.ExternalPages";
     private readonly ConcurrentDictionary<string, CachedPage> cache = new(StringComparer.OrdinalIgnoreCase);
 
-    public Task<Type> CompileAsync(string pageName, CancellationToken cancellationToken = default)
+    public Task<Type> CompileAsync(
+        string pageName,
+        string? filePath = null,
+        CancellationToken cancellationToken = default)
     {
-        var filePath = GetPagePath(pageName);
+        filePath ??= GetPagePath(pageName);
         var lastWriteTime = File.GetLastWriteTimeUtc(filePath);
 
         if (cache.TryGetValue(filePath, out var cachedPage) &&
@@ -121,7 +124,7 @@ public sealed class ExternalComponentCompiler(IWebHostEnvironment environment)
             ?? throw new InvalidOperationException($"External page '{filePath}' does not define a Blazor component."));
     }
 
-    private string GetPagePath(string pageName)
+    public string GetPagePath(string pageName)
     {
         if (!pageName.EndsWith(".razor", StringComparison.OrdinalIgnoreCase) ||
             pageName.Contains(Path.DirectorySeparatorChar) ||

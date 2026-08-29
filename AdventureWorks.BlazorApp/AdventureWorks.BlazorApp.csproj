@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="10.0.11" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="1.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -24,15 +25,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\AdventureWorks.ExternalPages\**\*.razor"
-             Link="AdventureWorks.ExternalPages\%(RecursiveDir)%(Filename)%(Extension)"
-             TargetPath="AdventureWorks.ExternalPages\%(RecursiveDir)%(Filename)%(Extension)"
-             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\AdventureWorks.ExternalPages\**\*.razor" Link="AdventureWorks.ExternalPages\%(RecursiveDir)%(Filename)%(Extension)" TargetPath="AdventureWorks.ExternalPages\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis.Razor.Compiler">
-      <HintPath>$(MSBuildSDKsPath)\Microsoft.NET.Sdk.Razor\source-generators\Microsoft.CodeAnalysis.Razor.Compiler.dll</HintPath>
+      <HintPath>$(MSBuildToolsPath)\Sdks\Microsoft.NET.Sdk.Razor\source-generators\Microsoft.CodeAnalysis.Razor.Compiler.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup>

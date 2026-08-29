@@ -2,6 +2,7 @@ using AdventureWorks.Abstractions;
 using AdventureWorks.BlazorApp.Components;
 using AdventureWorks.BlazorApp.Data;
 using AdventureWorks.BlazorApp.Services;
+using GitHub.Copilot;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,9 @@ builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddSingleton<ExternalComponentCompiler>();
+builder.Services.AddSingleton<CopilotClient>();
+builder.Services.AddScoped<PageUpdateWorkspace>();
+builder.Services.AddScoped<PageUpdateService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

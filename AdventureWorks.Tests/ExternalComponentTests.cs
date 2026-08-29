@@ -49,6 +49,7 @@ public sealed class ExternalComponentTests : IDisposable
 
         testContext.Services.AddSingleton<IWebHostEnvironment>(new TestWebHostEnvironment(contentRoot));
         testContext.Services.AddSingleton<ExternalComponentCompiler>();
+        testContext.Services.AddSingleton<PageUpdateWorkspace>();
         testContext.Services.AddSingleton<ICustomerService, TestCustomerService>();
         testContext.Services.AddSingleton<IOrderService, TestOrderService>();
         testContext.JSInterop.SetupModule("./_content/Microsoft.AspNetCore.Components.QuickGrid/QuickGrid.razor.js")
@@ -85,6 +86,20 @@ public sealed class ExternalComponentTests : IDisposable
 
         typeof(Microsoft.AspNetCore.Components.IComponent).IsAssignableFrom(componentType)
             .ShouldBeTrue();
+    }
+
+    [Fact]
+    public void PageUpdateWorkspace_UsesWorkspaceRootForUserPages()
+    {
+        var workspace = testContext.Services.GetRequiredService<PageUpdateWorkspace>();
+        var sourcePath = Path.Combine(
+            Path.GetDirectoryName(FindExternalPagesSource())!,
+            "CustomDashboardPage.razor");
+
+        var candidatePath = workspace.PreparePage("CustomDashboardPage.razor", sourcePath);
+
+        Path.GetFullPath(candidatePath)
+            .ShouldStartWith(Path.Combine(Path.GetDirectoryName(contentRoot)!, "AdventureWorks.UserPages"));
     }
 
     [Theory]

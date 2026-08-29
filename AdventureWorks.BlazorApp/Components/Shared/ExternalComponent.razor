@@ -1,4 +1,6 @@
 @inject ExternalComponentCompiler Compiler
+@inject PageUpdateWorkspace Workspace
+@implements IDisposable
 
 @if (pageType is null)
 {
@@ -22,6 +24,29 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        pageType = await Compiler.CompileAsync(PageName);
+        pageType = await Compiler.CompileAsync(
+            PageName,
+            Workspace.GetActivePagePath(PageName));
+    }
+
+    protected override void OnInitialized()
+    {
+        Workspace.Changed += HandleWorkspaceChanged;
+    }
+
+    public void Dispose()
+    {
+        Workspace.Changed -= HandleWorkspaceChanged;
+    }
+
+    private async Task HandleWorkspaceChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            pageType = await Compiler.CompileAsync(
+                PageName,
+                Workspace.GetActivePagePath(PageName));
+            StateHasChanged();
+        });
     }
 }

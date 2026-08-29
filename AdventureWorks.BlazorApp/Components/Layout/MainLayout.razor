@@ -1,4 +1,7 @@
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject PageUpdateService PageUpdateService
 
 <div class="d-flex min-vh-100">
     <NavMenu />
@@ -25,11 +28,18 @@
                 <label class="visually-hidden" for="page-update-message">Describe a page update</label>
                 <input id="page-update-message" class="form-control"
                        type="text" @bind="pageUpdateMessage"
-                       placeholder="Describe how you want this page updated" />
-                <button class="btn btn-primary text-nowrap" type="button" @onclick="SubmitPageUpdateAsync">
+                       placeholder="Describe how you want this page updated"
+                       disabled="@isSubmitting" />
+                <button class="btn btn-primary text-nowrap" type="button"
+                        @onclick="SubmitPageUpdateAsync" disabled="@isSubmitting">
                     <i class="fa-solid fa-paper-plane me-1" aria-hidden="true"></i>Submit
                 </button>
             </div>
+            @if (!string.IsNullOrWhiteSpace(updateStatus))
+            {
+                <div class="small mt-2 @(updateFailed ? "text-danger" : "text-secondary")"
+                     role="status">@updateStatus</div>
+            }
         </footer>
     </div>
 </div>
@@ -42,6 +52,64 @@
 
 @code {
     private string? pageUpdateMessage;
+    private string? updateStatus;
+    private bool updateFailed;
+    private bool isSubmitting;
 
-    private Task SubmitPageUpdateAsync() => Task.CompletedTask;
+    protected override void OnInitialized()
+    {
+        PageUpdateService.ProgressChanged += HandleProgressChangedAsync;
+    }
+
+    private async Task SubmitPageUpdateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(pageUpdateMessage) ||
+            PageUpdateWorkspace.ResolvePageName(Navigation.Uri) is not { } pageName)
+        {
+            updateFailed = true;
+            updateStatus = "Enter a request while viewing an editable page.";
+            return;
+        }
+
+        var request = pageUpdateMessage;
+        pageUpdateMessage = null;
+        isSubmitting = true;
+        updateFailed = false;
+        updateStatus = "Copilot is updating this page...";
+        try
+        {
+            await PageUpdateService.UpdatePageAsync(pageName, request);
+            updateStatus = "Page updated successfully.";
+        }
+        catch (OperationCanceledException)
+        {
+            updateFailed = true;
+            updateStatus = "The page update was canceled.";
+        }
+        catch (InvalidOperationException exception)
+        {
+            updateFailed = true;
+            updateStatus = $"The page was not updated: {exception.Message}";
+        }
+        catch (IOException exception)
+        {
+            updateFailed = true;
+            updateStatus = $"The page was not updated: {exception.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task HandleProgressChangedAsync(string message)
+    {
+        updateStatus = message;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        PageUpdateService.ProgressChanged -= HandleProgressChangedAsync;
+    }
 }
