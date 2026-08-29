@@ -1,0 +1,79 @@
+@using AdventureWorks.Abstractions
+@using AdventureWorks.SharedComponents
+@using AdventureWorks.BlazorApp.Services
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Components.Rendering
+@inject ICustomerService CustomerService
+@inject IOrderService OrderService
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">@RenderComponent(typeof(KpiCard), KpiParameters("Customers", customerCount.ToString("N0"), "fa-solid fa-users", "primary"))</div>
+    <div class="col-12 col-sm-6 col-xl-3">@RenderComponent(typeof(KpiCard), KpiParameters("Orders", orderCount.ToString("N0"), "fa-solid fa-file-invoice", "success"))</div>
+    <div class="col-12 col-sm-6 col-xl-3">@RenderComponent(typeof(KpiCard), KpiParameters("Revenue", totalRevenue.ToString("C0"), "fa-solid fa-sack-dollar", "warning"))</div>
+    <div class="col-12 col-sm-6 col-xl-3">@RenderComponent(typeof(KpiCard), KpiParameters("Avg. order value", averageOrderValue.ToString("C0"), "fa-solid fa-chart-line", "info"))</div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Recent orders</span>
+        <a class="btn btn-primary btn-sm" href="orders">View all</a>
+    </div>
+    <QuickGrid Items="recentOrders" Pagination="pagination" Class="table table-hover align-middle mb-0">
+        <PropertyColumn Property="order => order.SalesOrderID" Title="Order" Sortable="true"
+                        Class="fw-semibold" />
+        <TemplateColumn Title="Customer" Sortable="true" SortBy="customerNameSort">
+            <span data-testid="order-row">
+                <a href="@($"customers/{context.CustomerID}")">
+                    @(string.IsNullOrWhiteSpace(context.CustomerName) ? $"Customer {context.CustomerID}" : context.CustomerName)
+                </a>
+            </span>
+        </TemplateColumn>
+        <PropertyColumn Property="order => order.OrderDate" Title="Date" Format="d" Sortable="true" />
+        <TemplateColumn Title="Status" Sortable="true" SortBy="statusSort">
+            <span class="badge text-bg-secondary">@context.StatusText</span>
+        </TemplateColumn>
+        <PropertyColumn Property="order => order.TotalDue" Title="Total due" Format="C" Sortable="true" Class="text-end" />
+    </QuickGrid>
+    @if (pagination.TotalItemCount == 0)
+    {
+        <div class="p-4 text-center text-secondary">No orders found.</div>
+    }
+    <div class="border-top px-3 py-2">
+        <Paginator State="pagination" />
+    </div>
+</div>
+
+@code {
+    private IQueryable<OrderSummary> recentOrders = null!;
+    private int customerCount;
+    private int orderCount;
+    private decimal totalRevenue;
+    private decimal averageOrderValue;
+    private readonly PaginationState pagination = new() { ItemsPerPage = 10 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        customerCount = await CustomerService.GetCustomerCountAsync();
+        orderCount = await OrderService.GetOrderCountAsync();
+        totalRevenue = await OrderService.GetTotalRevenueAsync();
+        averageOrderValue = orderCount == 0 ? 0 : totalRevenue / orderCount;
+        recentOrders = OrderService.GetOrders().OrderByDescending(order => order.OrderDate).Take(100);
+    }
+
+    private static Dictionary<string, object> KpiParameters(string title, string value, string icon, string color) =>
+        new() { ["Title"] = title, ["Value"] = value, ["Icon"] = icon, ["Color"] = color };
+
+    private static RenderFragment RenderComponent(Type componentType, IReadOnlyDictionary<string, object> parameters) =>
+        builder =>
+        {
+            builder.OpenComponent(0, componentType);
+            builder.AddMultipleAttributes(1, parameters);
+            builder.CloseComponent();
+        };
+
+    private static readonly GridSort<OrderSummary> customerNameSort =
+        GridSort<OrderSummary>.ByAscending(order => order.CustomerName);
+
+    private static readonly GridSort<OrderSummary> statusSort =
+        GridSort<OrderSummary>.ByAscending(order => order.Status);
+}

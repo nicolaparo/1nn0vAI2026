@@ -1,4 +1,5 @@
 using AdventureWorks.BlazorApp.Services;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
 namespace AdventureWorks.Tests.Integration;
@@ -12,7 +13,7 @@ public class OrderServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new OrderService(dbContext);
 
-        var orders = await service.GetOrdersAsync(10);
+        var orders = await service.GetOrders().OrderByDescending(o => o.OrderDate).Take(10).ToListAsync();
 
         orders.Count.ShouldBe(10);
         orders.Select(o => o.OrderDate).ShouldBe(orders.Select(o => o.OrderDate).OrderDescending());
@@ -25,7 +26,7 @@ public class OrderServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new OrderService(dbContext);
 
-        var orders = await service.GetOrdersAsync(25);
+        var orders = await service.GetOrders().Take(25).ToListAsync();
 
         orders.ShouldAllBe(o => !string.IsNullOrWhiteSpace(o.CustomerName));
     }
@@ -35,9 +36,9 @@ public class OrderServiceTests(AdventureWorksContainerFixture fixture)
     {
         await using var dbContext = fixture.CreateDbContext();
         var service = new OrderService(dbContext);
-        var customerId = (await service.GetOrdersAsync(1)).Single().CustomerID;
+        var customerId = (await service.GetOrders().Take(1).ToListAsync()).Single().CustomerID;
 
-        var orders = await service.GetOrdersByCustomerAsync(customerId);
+        var orders = await service.GetOrders(customerId).ToListAsync();
 
         orders.ShouldNotBeEmpty();
         orders.ShouldAllBe(o => o.CustomerID == customerId);
@@ -49,7 +50,7 @@ public class OrderServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new OrderService(dbContext);
 
-        var orders = await service.GetOrdersByCustomerAsync(int.MaxValue);
+        var orders = await service.GetOrders(int.MaxValue).ToListAsync();
 
         orders.ShouldBeEmpty();
     }

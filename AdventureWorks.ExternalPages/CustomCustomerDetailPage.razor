@@ -1,0 +1,89 @@
+@using AdventureWorks.Abstractions
+@using AdventureWorks.BlazorApp.Services
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject ICustomerService CustomerService
+@inject IOrderService OrderService
+
+@if (notFound)
+{
+    <div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation me-2"></i>Customer @CustomerId was not found.</div>
+    <a class="btn btn-secondary" href="customers"><i class="fa-solid fa-arrow-left me-1"></i>Back to customers</a>
+}
+else if (customer is null)
+{
+    <div class="text-secondary"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading customer...</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0"><i class="fa-solid fa-address-card me-2 text-primary"></i>@customer.DisplayName</h1>
+        <a class="btn btn-secondary" href="customers"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+    </div>
+    <div class="row g-3">
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-semibold">Profile</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5 text-secondary">Customer ID</dt><dd class="col-7">@customer.CustomerID</dd>
+                        <dt class="col-5 text-secondary">Company</dt><dd class="col-7">@(customer.CompanyName ?? "-")</dd>
+                        <dt class="col-5 text-secondary">Contact</dt><dd class="col-7">@customer.ContactName</dd>
+                        <dt class="col-5 text-secondary">Email</dt><dd class="col-7">@(customer.EmailAddress ?? "-")</dd>
+                        <dt class="col-5 text-secondary">Phone</dt><dd class="col-7">@(customer.Phone ?? "-")</dd>
+                        <dt class="col-5 text-secondary">Orders</dt><dd class="col-7">@orderCount.ToString("N0")</dd>
+                        <dt class="col-5 text-secondary">Lifetime value</dt><dd class="col-7">@totalRevenue.ToString("C")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-8">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white fw-semibold">Order history</div>
+                <QuickGrid Items="orders" Pagination="pagination" Class="table table-hover align-middle mb-0">
+                    <PropertyColumn Property="order => order.SalesOrderID" Title="Order" Sortable="true"
+                                    Class="fw-semibold" />
+                    <PropertyColumn Property="order => order.OrderDate" Title="Date" Format="d" Sortable="true" />
+                    <TemplateColumn Title="Status" Sortable="true" SortBy="statusSort">
+                        <span class="badge text-bg-secondary">@context.StatusText</span>
+                    </TemplateColumn>
+                    <PropertyColumn Property="order => order.TotalDue" Title="Total due" Format="C" Sortable="true" Class="text-end" />
+                </QuickGrid>
+                @if (pagination.TotalItemCount == 0)
+                {
+                    <div class="p-4 text-center text-secondary">This customer has no orders yet.</div>
+                }
+                <div class="border-top px-3 py-2"><Paginator State="pagination" /></div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int CustomerId { get; set; }
+    private CustomerProfile? customer;
+    private IQueryable<OrderSummary> orders = null!;
+    private int orderCount;
+    private decimal totalRevenue;
+    private bool notFound;
+    private readonly PaginationState pagination = new() { ItemsPerPage = 10 };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        customer = await CustomerService.GetCustomerAsync(CustomerId);
+        if (customer is null)
+        {
+            notFound = true;
+            return;
+        }
+
+        notFound = false;
+        orderCount = await OrderService.GetOrderCountByCustomerAsync(CustomerId);
+        totalRevenue = await OrderService.GetTotalRevenueByCustomerAsync(CustomerId);
+        orders = OrderService.GetOrders(CustomerId);
+        await pagination.SetCurrentPageIndexAsync(0);
+    }
+
+    private static readonly GridSort<OrderSummary> statusSort =
+        GridSort<OrderSummary>.ByAscending(order => order.Status);
+}

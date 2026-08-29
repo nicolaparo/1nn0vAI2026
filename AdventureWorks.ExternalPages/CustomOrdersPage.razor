@@ -1,0 +1,46 @@
+@using AdventureWorks.Abstractions
+@using AdventureWorks.BlazorApp.Services
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject IOrderService OrderService
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">All orders</span>
+    </div>
+    <QuickGrid Items="orders" Pagination="pagination" Class="table table-hover align-middle mb-0">
+        <PropertyColumn Property="order => order.SalesOrderID" Title="Order" Sortable="true"
+                        Class="fw-semibold" />
+        <TemplateColumn Title="Customer" Sortable="true" SortBy="customerNameSort">
+            <span data-testid="order-row">
+                <a href="@($"customers/{context.CustomerID}")">
+                    @(string.IsNullOrWhiteSpace(context.CustomerName) ? $"Customer {context.CustomerID}" : context.CustomerName)
+                </a>
+            </span>
+        </TemplateColumn>
+        <PropertyColumn Property="order => order.OrderDate" Title="Date" Format="d" Sortable="true" />
+        <TemplateColumn Title="Status" Sortable="true" SortBy="statusSort">
+            <span class="badge text-bg-secondary">@context.StatusText</span>
+        </TemplateColumn>
+        <PropertyColumn Property="order => order.TotalDue" Title="Total due" Format="C" Sortable="true" Class="text-end" />
+    </QuickGrid>
+    @if (pagination.TotalItemCount == 0)
+    {
+        <div class="p-4 text-center text-secondary">No orders found.</div>
+    }
+    <div class="border-top px-3 py-2">
+        <Paginator State="pagination" />
+    </div>
+</div>
+
+@code {
+    private IQueryable<OrderSummary> orders = null!;
+    private readonly PaginationState pagination = new() { ItemsPerPage = 10 };
+
+    protected override void OnInitialized() => orders = OrderService.GetOrders();
+
+    private static readonly GridSort<OrderSummary> customerNameSort =
+        GridSort<OrderSummary>.ByAscending(order => order.CustomerName);
+
+    private static readonly GridSort<OrderSummary> statusSort =
+        GridSort<OrderSummary>.ByAscending(order => order.Status);
+}

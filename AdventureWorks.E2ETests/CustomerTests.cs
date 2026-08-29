@@ -10,7 +10,7 @@ public class CustomerTests : AdventureWorksPageTest
         await Page.GotoAsync("/customers");
 
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Customers" })).ToBeVisibleAsync();
-        await Expect(Page.GetByTestId("customer-row")).ToHaveCountAsync(50);
+        await Expect(Page.GetByTestId("customer-row")).ToHaveCountAsync(10);
     }
 
     [Fact]
@@ -49,9 +49,6 @@ public class CustomerTests : AdventureWorksPageTest
         await Expect(Page).ToHaveURLAsync(new Regex(@"/customers/\d+$"));
         await Expect(Page.GetByText("Profile")).ToBeVisibleAsync();
         await Expect(Page.GetByText("Order history")).ToBeVisibleAsync();
-        await Expect(Page.GetByTestId("ui-customization-placeholder")).ToBeVisibleAsync();
-        await Expect(Page.GetByTestId("ui-customization-placeholder"))
-            .ToContainTextAsync("User UI Customization / Dynamic Component Placeholder");
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-using AdventureWorks.BlazorApp.Data;
+using AdventureWorks.Abstractions;
 using Shouldly;
 
 namespace AdventureWorks.Tests;

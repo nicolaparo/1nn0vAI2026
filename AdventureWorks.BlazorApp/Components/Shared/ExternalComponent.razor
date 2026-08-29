@@ -1,0 +1,27 @@
+@inject ExternalComponentCompiler Compiler
+
+@if (pageType is null)
+{
+    <div class="text-secondary">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading page...
+    </div>
+}
+else
+{
+    <DynamicComponent Type="pageType" Parameters="Parameters" />
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string PageName { get; set; } = string.Empty;
+
+    [Parameter]
+    public IDictionary<string, object>? Parameters { get; set; }
+
+    private Type? pageType;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        pageType = await Compiler.CompileAsync(PageName);
+    }
+}

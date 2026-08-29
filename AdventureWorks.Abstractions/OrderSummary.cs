@@ -1,25 +1,14 @@
-namespace AdventureWorks.BlazorApp.Data;
+namespace AdventureWorks.Abstractions;
 
-/// <summary>
-/// Sales order row shown in the UI, including the resolved customer name.
-/// </summary>
 public record OrderSummary
 {
     public required int SalesOrderID { get; init; }
-
     public required DateTime OrderDate { get; init; }
-
     public required byte Status { get; init; }
-
     public required decimal TotalDue { get; init; }
-
     public required int CustomerID { get; init; }
-
     public string? CustomerName { get; init; }
 
-    /// <summary>
-    /// Status descriptions as documented on Sales.SalesOrderHeader.Status.
-    /// </summary>
     public string StatusText => Status switch
     {
         1 => "In process",

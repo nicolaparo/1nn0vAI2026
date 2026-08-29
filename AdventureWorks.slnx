@@ -3,5 +3,6 @@
   <Project Path="AdventureWorks.BlazorApp/AdventureWorks.BlazorApp.csproj" />
   <Project Path="AdventureWorks.E2ETests/AdventureWorks.E2ETests.csproj" />
   <Project Path="AdventureWorks.ServiceDefaults/AdventureWorks.ServiceDefaults.csproj" />
+  <Project Path="AdventureWorks.SharedComponents/AdventureWorks.SharedComponents.csproj" />
   <Project Path="AdventureWorks.Tests/AdventureWorks.Tests.csproj" />
 </Solution>

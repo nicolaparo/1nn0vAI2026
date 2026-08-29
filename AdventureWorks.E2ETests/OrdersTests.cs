@@ -10,18 +10,18 @@ public class OrdersTests : AdventureWorksPageTest
         await Page.GotoAsync("/orders");
 
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Orders" })).ToBeVisibleAsync();
-        await Expect(Page.GetByTestId("order-row")).ToHaveCountAsync(50);
+        await Expect(Page.GetByTestId("order-row")).ToHaveCountAsync(10);
     }
 
     [Fact]
     public async Task Orders_PageSizeChangeReloadsTheGridAsync()
     {
         await Page.GotoAsync("/orders");
+        await Expect(Page.GetByTestId("order-row")).ToHaveCountAsync(10);
+
+        await Page.GetByLabel("Rows per page").SelectOptionAsync("50");
+
         await Expect(Page.GetByTestId("order-row")).ToHaveCountAsync(50);
-
-        await Page.GetByLabel("Show").SelectOptionAsync("25");
-
-        await Expect(Page.GetByTestId("order-row")).ToHaveCountAsync(25);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using AdventureWorks.BlazorApp.Services;
+using Microsoft.EntityFrameworkCore;
 using Shouldly;
 
 namespace AdventureWorks.Tests.Integration;
@@ -12,7 +13,7 @@ public class CustomerServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new CustomerService(dbContext);
 
-        var customers = await service.SearchCustomersAsync(companyName: null, take: 25);
+        var customers = await service.GetCustomers().Take(25).ToListAsync();
 
         customers.Count.ShouldBe(25);
         customers.ShouldAllBe(c => c.CustomerID > 0);
@@ -25,7 +26,7 @@ public class CustomerServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new CustomerService(dbContext);
 
-        var customers = await service.SearchCustomersAsync("Bike");
+        var customers = await service.GetCustomers("Bike").ToListAsync();
 
         customers.ShouldNotBeEmpty();
         customers.ShouldAllBe(c => c.CompanyName!.Contains("Bike", StringComparison.OrdinalIgnoreCase));
@@ -37,7 +38,7 @@ public class CustomerServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new CustomerService(dbContext);
 
-        var customers = await service.SearchCustomersAsync("Bike", take: 10);
+        var customers = await service.GetCustomers("Bike").OrderBy(c => c.CompanyName).Take(10).ToListAsync();
 
         customers.Select(c => c.CompanyName).ShouldBe(customers.Select(c => c.CompanyName).Order(StringComparer.Ordinal));
     }
@@ -48,7 +49,7 @@ public class CustomerServiceTests(AdventureWorksContainerFixture fixture)
         await using var dbContext = fixture.CreateDbContext();
         var service = new CustomerService(dbContext);
 
-        var customers = await service.SearchCustomersAsync(companyName: null, take: 3);
+        var customers = await service.GetCustomers().Take(3).ToListAsync();
 
         customers.Count.ShouldBe(3);
     }
@@ -58,7 +59,7 @@ public class CustomerServiceTests(AdventureWorksContainerFixture fixture)
     {
         await using var dbContext = fixture.CreateDbContext();
         var service = new CustomerService(dbContext);
-        var expected = (await service.SearchCustomersAsync("Bike", take: 1)).Single();
+        var expected = (await service.GetCustomers("Bike").Take(1).ToListAsync()).Single();
 
         var customer = await service.GetCustomerAsync(expected.CustomerID);
 

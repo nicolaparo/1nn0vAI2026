@@ -1,6 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var sqlServer = builder.AddSqlServer("sql")
+    .WithImageRegistry("docker.io")
     .WithImage("chriseaton/adventureworks")
     .WithImageTag("latest")
     .WithLifetime(ContainerLifetime.Persistent);

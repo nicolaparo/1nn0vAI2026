@@ -1,0 +1,72 @@
+@using AdventureWorks.Abstractions
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Components.Web
+@inject ICustomerService CustomerService
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white">
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input class="form-control" type="search" placeholder="Filter by company name"
+                           aria-label="Filter by company name"
+                           @bind="companyName" @bind:event="oninput" @onkeyup="OnSearchKeyUpAsync" />
+                    <button class="btn btn-primary" type="button" @onclick="ApplyFilterAsync">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <QuickGrid Items="customers" Pagination="pagination" Class="table table-hover align-middle mb-0">
+        <PropertyColumn Property="customer => customer.CustomerID" Title="ID" Sortable="true"
+                        Class="text-secondary" />
+        <TemplateColumn Title="Company" Sortable="true" SortBy="companySort">
+            <span class="fw-semibold">@context.DisplayName</span>
+        </TemplateColumn>
+        <TemplateColumn Title="Contact" Sortable="true" SortBy="contactSort">@context.ContactName</TemplateColumn>
+        <PropertyColumn Property="customer => customer.EmailAddress" Title="Email" Sortable="true" />
+        <PropertyColumn Property="customer => customer.Phone" Title="Phone" Sortable="true" />
+        <TemplateColumn Title="Actions" Align="Align.End">
+            <span data-testid="customer-row">
+                <a class="btn btn-secondary btn-sm" href="@($"customers/{context.CustomerID}")"
+                   aria-label="@($"Open customer {context.CustomerID}")">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </span>
+        </TemplateColumn>
+    </QuickGrid>
+    <div class="border-top px-3 py-2">
+        <Paginator State="pagination" />
+    </div>
+</div>
+
+@code {
+    private string? companyName;
+    private IQueryable<CustomerProfile> customers = null!;
+    private readonly PaginationState pagination = new() { ItemsPerPage = 10 };
+
+    private static readonly GridSort<CustomerProfile> companySort =
+        GridSort<CustomerProfile>.ByAscending(customer => customer.CompanyName);
+
+    private static readonly GridSort<CustomerProfile> contactSort =
+        GridSort<CustomerProfile>.ByAscending(customer => customer.LastName)
+            .ThenAscending(customer => customer.FirstName);
+
+    protected override void OnInitialized() => customers = CustomerService.GetCustomers();
+
+    private async Task ApplyFilterAsync()
+    {
+        customers = CustomerService.GetCustomers(companyName);
+        await pagination.SetCurrentPageIndexAsync(0);
+    }
+
+    private async Task OnSearchKeyUpAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await ApplyFilterAsync();
+        }
+    }
+
+}

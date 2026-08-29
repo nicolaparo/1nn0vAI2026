@@ -1,100 +1,14 @@
 @page "/customers/{CustomerId:int}"
 @rendermode InteractiveServer
-@inject CustomerService CustomerService
-@inject OrderService OrderService
+@inject ICustomerService CustomerService
+@inject IOrderService OrderService
 
 <PageTitle>Customer details</PageTitle>
 
-@if (notFound)
-{
-    <div class="alert alert-warning"><i class="fa-solid fa-triangle-exclamation me-2"></i>Customer @CustomerId was not found.</div>
-    <a class="btn btn-secondary" href="customers"><i class="fa-solid fa-arrow-left me-1"></i>Back to customers</a>
-}
-else if (customer is null)
-{
-    <div class="text-secondary">
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading customer...
-    </div>
-}
-else
-{
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><i class="fa-solid fa-address-card me-2 text-primary"></i>@customer.DisplayName</h1>
-        <a class="btn btn-secondary" href="customers"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-12 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white fw-semibold">Profile</div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-5 text-secondary">Customer ID</dt>
-                        <dd class="col-7">@customer.CustomerID</dd>
-
-                        <dt class="col-5 text-secondary">Company</dt>
-                        <dd class="col-7">@(customer.CompanyName ?? "-")</dd>
-
-                        <dt class="col-5 text-secondary">Contact</dt>
-                        <dd class="col-7">@customer.ContactName</dd>
-
-                        <dt class="col-5 text-secondary">Email</dt>
-                        <dd class="col-7">@(customer.EmailAddress ?? "-")</dd>
-
-                        <dt class="col-5 text-secondary">Phone</dt>
-                        <dd class="col-7">@(customer.Phone ?? "-")</dd>
-
-                        <dt class="col-5 text-secondary">Orders</dt>
-                        <dd class="col-7">@(orders?.Count.ToString("N0") ?? "-")</dd>
-
-                        <dt class="col-5 text-secondary">Lifetime value</dt>
-                        <dd class="col-7">@(orders is null ? "-" : orders.Sum(o => o.TotalDue).ToString("C"))</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-xl-8">
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-white fw-semibold">Order history</div>
-                <OrderTable Orders="orders" ShowCustomer="false" EmptyMessage="This customer has no orders yet." />
-            </div>
-
-            <section class="card border-primary border-2 border-dashed bg-primary-subtle"
-                     data-testid="ui-customization-placeholder"
-                     aria-label="User UI customization placeholder">
-                <div class="card-body text-center py-5">
-                    <i class="fa-solid fa-puzzle-piece fa-2x text-primary mb-3"></i>
-                    <h2 class="h6 text-primary-emphasis">User UI Customization / Dynamic Component Placeholder</h2>
-                    <p class="text-secondary mb-0">Reserved area for dynamically rendered, user-configured components.</p>
-                </div>
-            </section>
-        </div>
-    </div>
-}
+<ExternalComponent PageName="CustomCustomerDetailPage.razor"
+              Parameters="pageParameters" />
 
 @code {
-    [Parameter]
-    public int CustomerId { get; set; }
-
-    private CustomerProfile? customer;
-    private IReadOnlyList<OrderSummary>? orders;
-    private bool notFound;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        customer = null;
-        orders = null;
-        notFound = false;
-
-        customer = await CustomerService.GetCustomerAsync(CustomerId);
-
-        if (customer is null)
-        {
-            notFound = true;
-            return;
-        }
-
-        orders = await OrderService.GetOrdersByCustomerAsync(CustomerId);
-    }
+    [Parameter] public int CustomerId { get; set; }
+    private Dictionary<string, object> pageParameters => new() { [nameof(CustomerId)] = CustomerId };
 }

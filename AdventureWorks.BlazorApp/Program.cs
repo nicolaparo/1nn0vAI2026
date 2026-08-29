@@ -1,3 +1,4 @@
+using AdventureWorks.Abstractions;
 using AdventureWorks.BlazorApp.Components;
 using AdventureWorks.BlazorApp.Data;
 using AdventureWorks.BlazorApp.Services;
@@ -7,9 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.AddSqlServerDbContext<AdventureWorksDbContext>("AdventureWorks");
+builder.Services.AddQuickGridEntityFrameworkAdapter();
 
-builder.Services.AddScoped<CustomerService>();
-builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddSingleton<ExternalComponentCompiler>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
