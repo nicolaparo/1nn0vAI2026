@@ -1,7 +1,6 @@
 # 1nn0vAI2026
 
-Demo repository for the talk **"Applicazioni allucinanti con GitHub Copilot SDK e C#"** at **1nn0vAI 2026**
-(slides content in [docs/presentation.md](docs/presentation.md), Italian).
+Demo repository for the talk **"Applicazioni allucinanti con GitHub Copilot SDK e C#"** at **1nn0vAI 2026**.
 
 🇬🇧 [English](#-english) · 🇮🇹 [Italiano](#-italiano)
 
