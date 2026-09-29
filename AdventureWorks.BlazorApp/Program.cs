@@ -14,6 +14,7 @@ builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddSingleton<ExternalComponentCompiler>();
+builder.Services.AddSingleton<PageTestRunner>();
 builder.Services.AddSingleton<CopilotClient>();
 builder.Services.AddScoped<PageUpdateWorkspace>();
 builder.Services.AddScoped<PageUpdateService>();

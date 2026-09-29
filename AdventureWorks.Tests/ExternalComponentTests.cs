@@ -13,6 +13,10 @@ namespace AdventureWorks.Tests;
 
 public sealed class ExternalComponentTests : IDisposable
 {
+    // Set by PageTestRunner: test the page Copilot just produced instead of the shipped ones.
+    private const string CandidateDirectoryVariable = "ADVENTUREWORKS_CANDIDATE_PAGES_DIRECTORY";
+    private const string CandidatePageVariable = "ADVENTUREWORKS_CANDIDATE_PAGE";
+
     private readonly string contentRoot;
     private readonly TestContext testContext = new();
 
@@ -21,7 +25,8 @@ public sealed class ExternalComponentTests : IDisposable
         var testRoot = Path.Combine(Path.GetTempPath(), $"AdventureWorks.ExternalComponents.{Guid.NewGuid():N}");
         contentRoot = Path.Combine(testRoot, "Web");
         Directory.CreateDirectory(Path.Combine(testRoot, "AdventureWorks.ExternalPages"));
-        foreach (var sourceFile in Directory.GetFiles(FindExternalPagesSource(), "*.razor"))
+        var pagesSource = Environment.GetEnvironmentVariable(CandidateDirectoryVariable) ?? FindExternalPagesSource();
+        foreach (var sourceFile in Directory.GetFiles(pagesSource, "*.razor"))
         {
             File.Copy(
                 sourceFile,
@@ -121,6 +126,38 @@ public sealed class ExternalComponentTests : IDisposable
         });
 
         rendered.Markup.ShouldContain(expectedText);
+    }
+
+    public static IEnumerable<object[]> CandidatePages() =>
+        (Environment.GetEnvironmentVariable(CandidatePageVariable) is { } candidate
+            ? [candidate]
+            : new[]
+            {
+                "CustomDashboardPage.razor",
+                "CustomCustomersPage.razor",
+                "CustomOrdersPage.razor",
+                "CustomCustomerDetailPage.razor",
+            })
+        .Select(page => new object[] { page });
+
+    // Post-compilation gate for Copilot page updates. Behavior-agnostic on purpose (the user may ask for
+    // any change): the page must compile, mount and render with the test services without throwing.
+    [Theory]
+    [MemberData(nameof(CandidatePages))]
+    public void CandidatePage_MountsAndRendersWithoutErrors(string pageName)
+    {
+        var rendered = testContext.RenderComponent<ExternalComponent>(parameters =>
+        {
+            parameters.Add(component => component.PageName, pageName);
+            if (pageName == "CustomCustomerDetailPage.razor")
+            {
+                parameters.Add(
+                    component => component.Parameters,
+                    new Dictionary<string, object> { ["CustomerId"] = 1 });
+            }
+        });
+
+        rendered.Markup.ShouldNotBeNullOrWhiteSpace();
     }
 
     public void Dispose()

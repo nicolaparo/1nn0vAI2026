@@ -1,0 +1,3 @@
+Captain: Anne
+Navigator: Marco
+Cook: Lucia

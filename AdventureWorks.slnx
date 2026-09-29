@@ -5,4 +5,8 @@
   <Project Path="AdventureWorks.ServiceDefaults/AdventureWorks.ServiceDefaults.csproj" />
   <Project Path="AdventureWorks.SharedComponents/AdventureWorks.SharedComponents.csproj" />
   <Project Path="AdventureWorks.Tests/AdventureWorks.Tests.csproj" />
+  <Project Path="CopilotSDKDemo.CustomPromptDemo/CopilotSDKDemo.CustomPromptDemo.csproj" />
+  <Project Path="CopilotSDKDemo.InstructionsDemo/CopilotSDKDemo.InstructionsDemo.csproj" />
+  <Project Path="CopilotSDKDemo.PermissionDemo/CopilotSDKDemo.PermissionDemo.csproj" />
+  <Project Path="CopilotSDKDemo.SandboxDemo/CopilotSDKDemo.SandboxDemo.csproj" />
 </Solution>

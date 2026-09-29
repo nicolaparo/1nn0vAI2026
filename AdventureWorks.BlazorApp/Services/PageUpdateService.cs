@@ -6,7 +6,8 @@ namespace AdventureWorks.BlazorApp.Services;
 public sealed class PageUpdateService(
     CopilotClient copilotClient,
     PageUpdateWorkspace workspace,
-    ExternalComponentCompiler compiler)
+    ExternalComponentCompiler compiler,
+    PageTestRunner testRunner)
 {
     public event Func<string, Task>? ProgressChanged;
 
@@ -29,20 +30,38 @@ public sealed class PageUpdateService(
             return "Progress update sent to the user.";
         }
 
-        async Task<string> CompilePageAsync()
+        // Compile, then (automatically) test the page. Returns null on success, otherwise the failure report.
+        async Task<string?> ValidatePageAsync(string who)
         {
-            await ReportProgressAsync("Copilot is compiling the current page version.");
+            await ReportProgressAsync($"{who} is compiling the current page version.");
             try
             {
                 await compiler.CompileAsync(pageName, candidatePath, cancellationToken);
-                await ReportProgressAsync("Copilot compilation succeeded.");
-                return "Compilation succeeded. The page is valid and ready to be reviewed.";
             }
             catch (InvalidOperationException exception)
             {
-                await ReportProgressAsync("Copilot found compilation errors and is revising the page.");
-                return $"Compilation failed. Fix these errors and invoke compile_page again:{Environment.NewLine}{exception.Message}";
+                await ReportProgressAsync("Compilation errors found.");
+                return $"Compilation failed:{Environment.NewLine}{exception.Message}";
             }
+
+            await ReportProgressAsync("Compilation succeeded. Running the tests.");
+            var tests = await testRunner.RunAsync(pageName, candidatePath, cancellationToken);
+            if (!tests.Passed)
+            {
+                await ReportProgressAsync("Tests failed.");
+                return $"Compilation succeeded but the tests failed:{Environment.NewLine}{tests.Output}";
+            }
+
+            await ReportProgressAsync("Tests passed.");
+            return null;
+        }
+
+        async Task<string> CompilePageAsync()
+        {
+            var failure = await ValidatePageAsync("Copilot");
+            return failure is null
+                ? "Compilation succeeded and the tests passed. The page is valid and ready to be reviewed."
+                : $"{failure}{Environment.NewLine}Fix these problems and invoke compile_page again.";
         }
 
         await using var session = await copilotClient.CreateSessionAsync(new SessionConfig
@@ -64,7 +83,7 @@ public sealed class PageUpdateService(
                     factoryOptions: new AIFunctionFactoryOptions
                     {
                         Name = "compile_page",
-                        Description = "Compile the current Razor page and return actionable diagnostics.",
+                        Description = "Compile the current Razor page, then run the automated tests, and return actionable diagnostics.",
                     }),
             ],
         }, cancellationToken);
@@ -82,9 +101,10 @@ public sealed class PageUpdateService(
             update before and after each meaningful operation so the user can see
             what is happening.
 
-            You have a compile_page tool. Invoke it after every edit. If compilation
-            fails, use the diagnostics to fix the page and invoke compile_page again.
-            Continue this edit/compile loop until compilation succeeds.
+            You have a compile_page tool. Invoke it after every edit. It compiles the
+            page and then runs the automated tests. If compilation or the tests fail,
+            use the diagnostics to fix the page and invoke compile_page again.
+            Continue this edit/compile/test loop until it succeeds.
             """;
 
         await ReportProgressAsync("Copilot is planning the requested page changes.");
@@ -94,7 +114,11 @@ public sealed class PageUpdateService(
             cancellationToken);
 
         await ReportProgressAsync("Validating the updated page.");
-        await compiler.CompileAsync(pageName, candidatePath, cancellationToken);
+        if (await ValidatePageAsync("The app") is { } failure)
+        {
+            throw new InvalidOperationException($"The updated page was not activated. {failure}");
+        }
+
         await ReportProgressAsync("Loading the validated page.");
         await workspace.ActivatePageAsync(pageName, candidatePath);
         await ReportProgressAsync("Page update complete.");
